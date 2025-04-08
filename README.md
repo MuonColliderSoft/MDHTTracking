@@ -15,7 +15,9 @@ HTATree.OutputLevel = INFO
 HTATree.ProcessorType = "HTATrainingTree"
 HTATree.Parameters = {
     "MCParticleCollection": [ MCP ],
-    "TrackerHitInputCollections": [ VXDB_d, VXDE_d, ITDB_d, ITDE_d, OTDB_d, OTDE_d ],
-    "ParticleTypes": [ "13" ]                                                                                                           
+    "TrackerHitCollections": [ VXDB_d, VXDE_d, ITDB_d, ITDE_d, OTDB_d, OTDE_d ],
+    "TrackerSimHitCollections": [ VXDB_s, VXDE_s, ITDB_s, ITDE_s, OTDB_s, OTDE_s ],
+    "TrackerHitRelationCollections": [ VXDB_r, VXDE_r, ITDB_r, ITDE_r, OTDB_r, OTDE_r ],
+    "ParticleTypes": [ "13" ]
 }
 ```

@@ -8,6 +8,9 @@
 #include "EVENT/LCCollection.h"
 #include "EVENT/MCParticle.h"
 #include "EVENT/TrackerHitPlane.h"
+#include "EVENT/SimTrackerHit.h"
+
+#include "UTIL/LCRelationNavigator.h"
 
 #include "DD4hep/Detector.h"
 #include "DD4hep/DD4hepUnits.h"
@@ -29,9 +32,21 @@ HTATrainingTree::HTATrainingTree()
 			      std::string("MCParticle")
 			      );
   
-  registerProcessorParameter( "TrackerHitInputCollections",
+  registerProcessorParameter( "TrackerHitCollections",
 			      "Name of the tracker hit input collections",
 			      _inputTrackerHitCollections,
+			      {}
+			      );
+
+  registerProcessorParameter( "TrackerSimHitCollections",
+			      "Name of the tracker simhit input collections",
+			      _inputTrackerSimHitCollections,
+			      {}
+			      );
+
+  registerProcessorParameter( "TrackerHitRelationCollections",
+			      "Name of the tracker hit relations input collections",
+			      _inputTrackerHitRelCollections,
 			      {}
 			      );
 
@@ -74,6 +89,7 @@ void HTATrainingTree::init() {
 
   _HTAtree->Branch("n_hit",&_n_hit,"n_hit/I");
   _HTAtree->Branch("hit_index", _hit_index, "hit_index[n_hit]/I");
+  _HTAtree->Branch("hit_mcp", _hit_mcp, "hit_mcp[n_hit]/I");
   _HTAtree->Branch("hit_id0", _hit_id0, "hit_id0[n_hit]/I");
   _HTAtree->Branch("hit_x", _hit_x, "hit_x[n_hit]/F");
   _HTAtree->Branch("hit_y", _hit_y, "hit_y[n_hit]/F");
@@ -82,6 +98,7 @@ void HTATrainingTree::init() {
   _HTAtree->Branch("hit_xloc", _hit_xloc, "hit_xloc[n_hit]/F");
   _HTAtree->Branch("hit_yloc", _hit_yloc, "hit_yloc[n_hit]/F");
   //_HTAtree->Branch("hit_index", "std::vector<int>",&_hit_index);
+  //_HTAtree->Branch("hit_mcp", "std::vector<int>",&_hit_mcp);
   //_HTAtree->Branch("hit_id0", "std::vector<int>",&_hit_id0);
   //_HTAtree->Branch("hit_x", "std::vector<float>",&_hit_x);
   //_HTAtree->Branch("hit_y", "std::vector<float>",&_hit_y);
@@ -100,11 +117,31 @@ void HTATrainingTree::processRunHeader( LCRunHeader* /*run*/) {}
 
 void HTATrainingTree::processEvent( LCEvent * evt ) {
 
+  // --- By default, match tracker reco and sim hits
+  bool match_SimRecoHits = true;
+
+
+  // --- Check if the simhit and relation collections are provided and if their numbers are consistent
+  if ( _inputTrackerSimHitCollections.size() == 0 || _inputTrackerSimHitCollections.size() == 0 ){
+    match_SimRecoHits = false;
+    streamlog_out(WARNING) << " TrackerSimHitCollections or TrackerHitRelationCollections not available:"
+			   << " no sim-reco matching!" << std::endl;
+  }
+  else {
+    if ( _inputTrackerSimHitCollections.size() != _inputTrackerHitCollections.size() ||
+	 _inputTrackerHitRelCollections.size() != _inputTrackerHitCollections.size()) {
+      std::stringstream err_msg;
+      err_msg << "Mismatch between the recohits, simhits, and relations input collections" << std::endl ;
+      throw EVENT::Exception( err_msg.str() ) ;
+    }
+  }
+
+
   // --- Get the run and event numbers
   _nRun = evt->getRunNumber(); 
   _nEvt = evt->getEventNumber(); 
 
-  
+
   // --- Get the MC particles collection
   LCCollection* inputMCParticles = nullptr;
 
@@ -120,6 +157,8 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
   // --- Get the tracker hit collections
   const unsigned int nTrackerHitCol = _inputTrackerHitCollections.size();
   std::vector<LCCollection*> inputHitColls(nTrackerHitCol);
+  std::vector<LCCollection*> inputSimHitColls(nTrackerHitCol);
+  std::vector<LCCollection*> inputHitRelColls(nTrackerHitCol);
 
   for (unsigned int icol=0; icol<nTrackerHitCol ; ++icol) {
 
@@ -130,6 +169,26 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
       streamlog_out(WARNING) << _inputTrackerHitCollections[icol] << " collection not available" << std::endl;
       return;
     }
+
+    if ( match_SimRecoHits ) {
+
+      try {
+	inputSimHitColls[icol] = evt->getCollection(_inputTrackerSimHitCollections[icol]);
+      }
+      catch( lcio::DataNotAvailableException& e ) {
+	streamlog_out(WARNING) << _inputTrackerSimHitCollections[icol] << " collection not available" << std::endl;
+	return;
+      }
+
+      try {
+	inputHitRelColls[icol] = evt->getCollection(_inputTrackerHitRelCollections[icol]);
+      }
+      catch( lcio::DataNotAvailableException& e ) {
+	streamlog_out(WARNING) << _inputTrackerHitRelCollections[icol] << " collection not available" << std::endl;
+	return;
+      }
+
+    } // if match_SimRecoHits
 
   } // icol loop
 
@@ -167,7 +226,11 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 
     LCCollection* hit_col = inputHitColls[icol];
     if( !hit_col ) continue ;
-      
+
+    UTIL::LCRelationNavigator* hit_rel = nullptr;
+    if ( match_SimRecoHits )
+      hit_rel = new UTIL::LCRelationNavigator(inputHitRelColls[icol]);
+
     for (int ihit=0; ihit<hit_col->getNumberOfElements(); ++ihit){
 
       TrackerHitPlane* hit = dynamic_cast<TrackerHitPlane*>(hit_col->getElementAt(ihit));
@@ -178,7 +241,20 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
       dd4hep::rec::Vector3D globalPoint( hit->getPosition()[0], hit->getPosition()[1], hit->getPosition()[2] );
       dd4hep::rec::Vector2D localPoint = surf->globalToLocal( dd4hep::mm * globalPoint );
             
+      int hit_mother = 0;
+      if ( match_SimRecoHits && hit_rel != nullptr ){
+
+	const LCObjectVec& simHitVector = hit_rel->getRelatedToObjects(hit);
+
+	if ( simHitVector.size() != 0 ){
+	  SimTrackerHit* simhit = dynamic_cast<SimTrackerHit*>(simHitVector.at(0));
+	  hit_mother = simhit->getMCParticle()->getPDG();
+	}
+
+      } // if match_SimRecoHits && hit_rel != nullptr
+
       _hit_index[_n_hit] = ihit;
+      _hit_mcp[_n_hit] = hit_mother;
       _hit_id0[_n_hit] = hit->getCellID0();
       _hit_x[_n_hit] = globalPoint[0];
       _hit_y[_n_hit] = globalPoint[1];
@@ -197,11 +273,10 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 
       _n_hit++;
       
-      //std::cout << ihit << " " << hit->getPosition()[0] << " " << hit->getPosition()[1] << " " << hit->getPosition()[2] << std::endl;
-      //std::cout << globalPoint[0] << " " <<  globalPoint[1] << " " <<  globalPoint[2] << std::endl;
-      //std::cout << localPoint[0] << " " <<  localPoint[1] << std::endl;                                     
-      
     } // ihit loop
+
+    if ( match_SimRecoHits )
+      delete hit_rel;
 
   } // icol loop
 

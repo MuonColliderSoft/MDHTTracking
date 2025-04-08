@@ -12,8 +12,10 @@
 /**
  * Produces a flat ntuple for the HT array training
  *
- * @parameter MCParticleCollection Name of the MCParticle collection
+ * @parameter MCParticleCollection Name of the Monte Carlo particle collection
  * @parameter TrackerHitCollections List of the tracker hits collections
+ * @parameter TrackerSimHitCollections List of the tracker simhits collections
+ * @parameter TrackerHitRelCollections List of the tracker hit relations collections
  * @parameter ParticleTypes Particle types to be saved in the tree
  *
  * @author M. Casarsa
@@ -72,6 +74,7 @@ private:
   
   int _n_hit {0};
   int _hit_index[MAX_HITS] = {0};
+  int _hit_mcp[MAX_HITS] = {0};
   int _hit_id0[MAX_HITS] = {0};
   float _hit_x[MAX_HITS] = {0.0f};
   float _hit_y[MAX_HITS] = {0.0f};
@@ -80,6 +83,7 @@ private:
   float _hit_xloc[MAX_HITS] = {0.0f};
   float _hit_yloc[MAX_HITS] = {0.0f};
   //std::vector<int>   _hit_index {};
+  //std::vector<int>   _hit_mcp {};
   //std::vector<int>   _hit_id0 {};
   //std::vector<float> _hit_x {};
   //std::vector<float> _hit_y {};
@@ -93,6 +97,12 @@ private:
   
   //! Input tracker hit collections
   std::vector<std::string> _inputTrackerHitCollections {};
+
+  //! Input tracker simhit collections
+  std::vector<std::string> _inputTrackerSimHitCollections {};
+
+  //! Input tracker hit relation collections
+  std::vector<std::string> _inputTrackerHitRelCollections {};
 
   //! Particle types
   std::vector<int> _particleTypes {};
