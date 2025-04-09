@@ -107,4 +107,6 @@ private:
   //! Particle types
   std::vector<int> _particleTypes {};
 
+  bool _saveOnlyPartHits = true;
+
 };

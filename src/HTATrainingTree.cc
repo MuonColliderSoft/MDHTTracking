@@ -56,6 +56,12 @@ HTATrainingTree::HTATrainingTree()
 			      {}
 			      );
 
+  registerProcessorParameter( "SaveOnlyPartHits",
+			      "Save only hits from the primary particles",
+			      _saveOnlyPartHits,
+			      _saveOnlyPartHits
+			      );
+
 }
 
 void HTATrainingTree::init() {
@@ -249,7 +255,17 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 	if ( simHitVector.size() != 0 ){
 	  SimTrackerHit* simhit = dynamic_cast<SimTrackerHit*>(simHitVector.at(0));
 	  hit_mother = simhit->getMCParticle()->getPDG();
-	}
+	  hit_mother = simhit->getMCParticle()->getPDG();
+	  int part_status = simhit->getMCParticle()->getGeneratorStatus();
+
+	  // If _saveOnlyPartHits  skip hits from secondary particles
+	  if ( _saveOnlyPartHits &&
+	       ( part_status != 1 ||
+		 std::find(_particleTypes.begin(), _particleTypes.end(), fabs(hit_mother)) == _particleTypes.end() )
+	       )
+	    continue;
+
+	} // if simHitVector.size()
 
       } // if match_SimRecoHits && hit_rel != nullptr
 
