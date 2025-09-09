@@ -16,7 +16,7 @@ parser.add_argument('-e', '--events', metavar='N', type=int, default=1,  help='#
 parser.add_argument('-p', '--particles', metavar='N', type=int, default=1,  help='# of particles/event to generate (default: 1)')
 parser.add_argument('-o', '--overwrite', action='store_true',  help='Overwrite existing output file')
 parser.add_argument('--pdg', metavar='ID', type=int, default=[13], nargs='+',  help='PdgIds of the allowed particles (default: [13])')
-parser.add_argument('--pt', metavar='V', type=float, default=1,  help='Minimum ranverse momentum [GeV] (default: 1)')
+parser.add_argument('--pt', metavar='V', type=float, default=1,  help='Minimum tranverse momentum [GeV] (default: 1)')
 parser.add_argument('--theta', metavar='A', type=float, default=[10,170], nargs='+',  help='Polar angle [deg] (default: 10 170)')
 parser.add_argument('--phi', metavar='A', type=float, default=[0,360], nargs='+',  help='Azimuthal angle [deg] (default: 0 360)')
 parser.add_argument('--dz', metavar='V', type=float, default=0,  help='Beam spread along Z [mm] (default: 0)')
