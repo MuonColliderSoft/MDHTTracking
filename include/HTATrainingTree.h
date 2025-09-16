@@ -70,27 +70,23 @@ private:
   float _part_t0 {0.};
   float _part_q {0.};
 
-  static const int MAX_HITS = 1000;
-  
   int _n_hit {0};
-  int _hit_index[MAX_HITS] = {0};
-  int _hit_mcp[MAX_HITS] = {0};
-  int _hit_id0[MAX_HITS] = {0};
-  float _hit_x[MAX_HITS] = {0.0f};
-  float _hit_y[MAX_HITS] = {0.0f};
-  float _hit_z[MAX_HITS] = {0.0f};
-  float _hit_t[MAX_HITS] = {0.0f};
-  float _hit_xloc[MAX_HITS] = {0.0f};
-  float _hit_yloc[MAX_HITS] = {0.0f};
-  //std::vector<int>   _hit_index {};
-  //std::vector<int>   _hit_mcp {};
-  //std::vector<int>   _hit_id0 {};
-  //std::vector<float> _hit_x {};
-  //std::vector<float> _hit_y {};
-  //std::vector<float> _hit_z {};
-  //std::vector<float> _hit_t {};
-  //std::vector<float> _hit_xloc {};
-  //std::vector<float> _hit_yloc {};
+  std::vector<unsigned int>* _hit_index;
+  std::vector<int>* _hit_mcp;
+  std::vector<unsigned int>* _hit_id0;
+  std::vector<float>* _hit_x;
+  std::vector<float>* _hit_y;
+  std::vector<float>* _hit_z;
+  std::vector<float>* _hit_t;
+  std::vector<float>* _hit_xloc;
+  std::vector<float>* _hit_yloc;
+  std::vector<float>* _hit_dxloc;
+  std::vector<float>* _hit_dyloc;
+  std::vector<float>* _hit_uphi;
+  std::vector<float>* _hit_utheta;
+  std::vector<float>* _hit_vphi;
+  std::vector<float>* _hit_vtheta;
+
 
   //! Input MC particle collection
   std::string _inputMCParticleCollection {};

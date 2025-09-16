@@ -75,7 +75,25 @@ void HTATrainingTree::init() {
   dd4hep::rec::SurfaceManager& surfMan = *theDetector.extension<dd4hep::rec::SurfaceManager>() ;
   _surfMap = surfMan.map( "world" ) ;
 
-  
+
+  // --- Create the hit vectors
+  _hit_index   = new std::vector<unsigned int>();
+  _hit_mcp     = new std::vector<int>();
+  _hit_id0     = new std::vector<unsigned int>();
+  _hit_x       = new std::vector<float>();
+  _hit_y       = new std::vector<float>();
+  _hit_z       = new std::vector<float>();
+  _hit_t       = new std::vector<float>();
+  _hit_xloc    = new std::vector<float>();
+  _hit_yloc    = new std::vector<float>();
+  _hit_dxloc   = new std::vector<float>();
+  _hit_dyloc   = new std::vector<float>();
+  _hit_uphi    = new std::vector<float>();
+  _hit_utheta  = new std::vector<float>();
+  _hit_vphi    = new std::vector<float>();
+  _hit_vtheta  = new std::vector<float>();
+
+
   // --- Define the HTA tree
   _HTAtree = new TTree("HTAtree", "HTA training tree");
 
@@ -93,26 +111,23 @@ void HTATrainingTree::init() {
   _HTAtree->Branch("part_t0", &_part_t0, "part_t0/F");
   _HTAtree->Branch("part_q", &_part_q, "part_q/F");
 
-  _HTAtree->Branch("n_hit",&_n_hit,"n_hit/I");
-  _HTAtree->Branch("hit_index", _hit_index, "hit_index[n_hit]/I");
-  _HTAtree->Branch("hit_mcp", _hit_mcp, "hit_mcp[n_hit]/I");
-  _HTAtree->Branch("hit_id0", _hit_id0, "hit_id0[n_hit]/I");
-  _HTAtree->Branch("hit_x", _hit_x, "hit_x[n_hit]/F");
-  _HTAtree->Branch("hit_y", _hit_y, "hit_y[n_hit]/F");
-  _HTAtree->Branch("hit_z", _hit_z, "hit_z[n_hit]/F");
-  _HTAtree->Branch("hit_t", _hit_t, "hit_t[n_hit]/F");
-  _HTAtree->Branch("hit_xloc", _hit_xloc, "hit_xloc[n_hit]/F");
-  _HTAtree->Branch("hit_yloc", _hit_yloc, "hit_yloc[n_hit]/F");
-  //_HTAtree->Branch("hit_index", "std::vector<int>",&_hit_index);
-  //_HTAtree->Branch("hit_mcp", "std::vector<int>",&_hit_mcp);
-  //_HTAtree->Branch("hit_id0", "std::vector<int>",&_hit_id0);
-  //_HTAtree->Branch("hit_x", "std::vector<float>",&_hit_x);
-  //_HTAtree->Branch("hit_y", "std::vector<float>",&_hit_y);
-  //_HTAtree->Branch("hit_z", "std::vector<float>",&_hit_z);
-  //_HTAtree->Branch("hit_t", "std::vector<float>",&_hit_t);
-  //_HTAtree->Branch("hit_xloc", "std::vector<float>",&_hit_xloc);
-  //_HTAtree->Branch("hit_yloc", "std::vector<float>",&_hit_yloc);
-
+  _HTAtree->Branch("n_hit", &_n_hit);
+  _HTAtree->Branch("hit_index", _hit_index);
+  _HTAtree->Branch("hit_mcp", _hit_mcp);
+  _HTAtree->Branch("hit_id0", _hit_id0);  
+  _HTAtree->Branch("hit_x", _hit_x);
+  _HTAtree->Branch("hit_y", _hit_y);
+  _HTAtree->Branch("hit_z", _hit_z);
+  _HTAtree->Branch("hit_t", _hit_t);
+  _HTAtree->Branch("hit_xloc", _hit_xloc);
+  _HTAtree->Branch("hit_yloc", _hit_yloc);
+  _HTAtree->Branch("hit_dxloc", _hit_dxloc);
+  _HTAtree->Branch("hit_dyloc", _hit_dyloc);
+  _HTAtree->Branch("hit_uphi", _hit_uphi);
+  _HTAtree->Branch("hit_utheta", _hit_utheta);
+  _HTAtree->Branch("hit_vphi", _hit_vphi);
+  _HTAtree->Branch("hit_vtheta", _hit_vtheta);
+  
   
   // --- Print the initial parameters
   printParameters() ;
@@ -142,7 +157,7 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
     }
   }
 
-
+  
   // --- Get the run and event numbers
   _nRun = evt->getRunNumber(); 
   _nEvt = evt->getEventNumber(); 
@@ -159,7 +174,7 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
     return;
   }
 
-  
+
   // --- Get the tracker hit collections
   const unsigned int nTrackerHitCol = _inputTrackerHitCollections.size();
   std::vector<LCCollection*> inputHitColls(nTrackerHitCol);
@@ -198,7 +213,7 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 
   } // icol loop
 
-
+  
   // --- Loop over the MC particles
   for (int ipart=0; ipart<inputMCParticles->getNumberOfElements(); ++ipart){
 
@@ -227,6 +242,7 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 
 
   // --- Loop over the tracker hits
+  
   _n_hit = 0;
   for (unsigned int icol=0; icol<inputHitColls.size(); ++icol){
 
@@ -269,26 +285,26 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 
       } // if match_SimRecoHits && hit_rel != nullptr
 
-      _hit_index[_n_hit] = ihit;
-      _hit_mcp[_n_hit] = hit_mother;
-      _hit_id0[_n_hit] = hit->getCellID0();
-      _hit_x[_n_hit] = globalPoint[0];
-      _hit_y[_n_hit] = globalPoint[1];
-      _hit_z[_n_hit] = globalPoint[2];
-      _hit_t[_n_hit] = hit->getTime();
-      _hit_xloc[_n_hit] = localPoint[0]/dd4hep::mm;
-      _hit_yloc[_n_hit] = localPoint[1]/dd4hep::mm;
-      //_hit_index.push_back(ihit);
-      //_hit_id0.push_back(hit->getCellID0());
-      //_hit_x.push_back(globalPoint[0]);
-      //_hit_y.push_back(globalPoint[1]);
-      //_hit_z.push_back(globalPoint[2]);
-      //_hit_t.push_back(hit->getTime());
-      //_hit_xloc.push_back(localPoint[0]/dd4hep::mm);
-      //_hit_yloc.push_back(localPoint[1]/dd4hep::mm);
+      
+      _hit_index->push_back(ihit);
+      _hit_mcp->push_back(hit_mother);
+      _hit_id0->push_back(hit->getCellID0());
+      _hit_x->push_back(globalPoint[0]);
+      _hit_y->push_back(globalPoint[1]);
+      _hit_z->push_back(globalPoint[2]);
+      _hit_t->push_back(hit->getTime());
+      _hit_xloc->push_back(localPoint[0]/dd4hep::mm);
+      _hit_yloc->push_back(localPoint[1]/dd4hep::mm);
+      _hit_dxloc->push_back(hit->getdU());
+      _hit_dyloc->push_back(hit->getdV());
+      _hit_uphi->push_back(hit->getU()[0]);
+      _hit_utheta->push_back(hit->getU()[1]);
+      _hit_vphi->push_back(hit->getV()[0]);
+      _hit_vtheta->push_back(hit->getV()[1]);
 
       _n_hit++;
       
+
     } // ihit loop
 
     if ( match_SimRecoHits )
@@ -296,23 +312,51 @@ void HTATrainingTree::processEvent( LCEvent * evt ) {
 
   } // icol loop
 
-  
+
   // --- Fill the tree
   _HTAtree->Fill();  
 
+  
+  // --- Clear the hit vectors
 
-  // --- Clear the vectors
-  //_hit_index.clear();
-  //_hit_id0.clear();
-  //_hit_x.clear();
-  //_hit_y.clear();
-  //_hit_z.clear();
-  //_hit_t.clear();
-  //_hit_xloc.clear();
-  //_hit_yloc.clear();
+  _hit_index->clear();
+  _hit_mcp->clear();
+  _hit_id0->clear();
+  _hit_x->clear();
+  _hit_y->clear();
+  _hit_z->clear();
+  _hit_t->clear();
+  _hit_xloc->clear();
+  _hit_yloc->clear();
+  _hit_dxloc->clear();
+  _hit_dyloc->clear();
+  _hit_uphi->clear();
+  _hit_utheta->clear();
+  _hit_vphi->clear();
+  _hit_vtheta->clear();
 
 }
 
 void HTATrainingTree::check( LCEvent * /*evt*/ ){}
 
-void HTATrainingTree::end(){}
+void HTATrainingTree::end(){
+
+  // --- Clean up the heap
+
+  delete _hit_index;
+  delete _hit_mcp;
+  delete _hit_id0;
+  delete _hit_x;
+  delete _hit_y;
+  delete _hit_z;
+  delete _hit_t;
+  delete _hit_xloc;
+  delete _hit_yloc;
+  delete _hit_dxloc;
+  delete _hit_dyloc;
+  delete _hit_uphi;
+  delete _hit_utheta;
+  delete _hit_vphi;
+  delete _hit_vtheta;
+
+}

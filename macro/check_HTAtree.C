@@ -38,7 +38,7 @@ void check_HTAtree(){
   }
   
   // --- open the root file
-  TFile *input_file = TFile::Open("ntu/ntu_muongun_pt3_theta10-170_phi0-30_20M.root");
+  TFile *input_file = TFile::Open("ntu_HTAtraining.root");
 
   // --- retrieve the tree
   TTree *tree = (TTree*) input_file->Get("HTAtree");
@@ -69,29 +69,42 @@ void check_HTAtree(){
   tree->SetBranchAddress("part_q",   &part_q);
 
   // tracker hits
-  static const int MAX_HITS = 1000;
-
   int n_hit;
-  int hit_index[MAX_HITS];
-  int hit_id0[MAX_HITS];
-  float hit_x[MAX_HITS];
-  float hit_y[MAX_HITS];
-  float hit_z[MAX_HITS];
-  float hit_t[MAX_HITS];
-  float hit_xloc[MAX_HITS];
-  float hit_yloc[MAX_HITS];
+  std::vector<unsigned int>* hit_index = nullptr;
+  std::vector<int>* hit_mcp = nullptr;
+  std::vector<unsigned int>* hit_id0 = nullptr;
+  std::vector<float>* hit_x = nullptr;
+  std::vector<float>* hit_y = nullptr;
+  std::vector<float>* hit_z = nullptr;
+  std::vector<float>* hit_t = nullptr;
+  std::vector<float>* hit_xloc = nullptr;
+  std::vector<float>* hit_yloc = nullptr;
+  std::vector<float>* hit_dxloc = nullptr;
+  std::vector<float>* hit_dyloc = nullptr;
+  std::vector<float>* hit_uphi = nullptr;
+  std::vector<float>* hit_utheta = nullptr;
+  std::vector<float>* hit_vphi = nullptr;
+  std::vector<float>* hit_vtheta = nullptr;
 
   tree->SetBranchAddress("n_hit", &n_hit);
-  tree->SetBranchAddress("hit_index", hit_index);
-  tree->SetBranchAddress("hit_id0", hit_id0);
-  tree->SetBranchAddress("hit_x", hit_x);
-  tree->SetBranchAddress("hit_y", hit_y);
-  tree->SetBranchAddress("hit_z", hit_z);
-  tree->SetBranchAddress("hit_t", hit_t);
-  tree->SetBranchAddress("hit_xloc", hit_xloc);
-  tree->SetBranchAddress("hit_yloc", hit_yloc);
+  tree->SetBranchAddress("hit_index", &hit_index);
+  tree->SetBranchAddress("hit_mcp", &hit_mcp);
+  tree->SetBranchAddress("hit_id0", &hit_id0);
+  tree->SetBranchAddress("hit_x", &hit_x);
+  tree->SetBranchAddress("hit_y", &hit_y);
+  tree->SetBranchAddress("hit_z", &hit_z);
+  tree->SetBranchAddress("hit_t", &hit_t);
+  tree->SetBranchAddress("hit_xloc", &hit_xloc);
+  tree->SetBranchAddress("hit_yloc", &hit_yloc);
+  tree->SetBranchAddress("hit_dxloc", &hit_dxloc);
+  tree->SetBranchAddress("hit_dyloc", &hit_dyloc);
+  tree->SetBranchAddress("hit_uphi", &hit_uphi);
+  tree->SetBranchAddress("hit_utheta", &hit_utheta);
+  tree->SetBranchAddress("hit_vphi", &hit_vphi);
+  tree->SetBranchAddress("hit_vtheta", &hit_vtheta);
 
   // --- loop over all entries
+
   Long64_t nEntries = tree->GetEntries();
   for (Long64_t ientry = 0; ientry < nEntries; ++ientry) {
 
@@ -129,21 +142,18 @@ void check_HTAtree(){
       //    OT barrel  = 5
       //    OT endcap  = 6
       
-      const unsigned int system = (unsigned) ( hit_id0[ihit] & 0x1f );
-      const int side = (int) ( (hit_id0[ihit] >> 5) & 0x3 );
-      unsigned int layer = (unsigned) ( (hit_id0[ihit] >> 7) & 0x3f );
+      const unsigned int system = (unsigned) ( hit_id0->at(ihit) & 0x1f );
+      const int side = (int) ( (hit_id0->at(ihit) >> 5) & 0x3 );
+      unsigned int layer = (unsigned) ( (hit_id0->at(ihit) >> 7) & 0x3f );
       if (system == 1 || system == 2 ) layer /= 2;
-      
-      const float hit_rho = sqrt(hit_x[ihit]*hit_x[ihit]+hit_y[ihit]*hit_y[ihit]);
 
-      h2_yx.Fill(hit_x[ihit], hit_y[ihit]);
-      h2_rz.Fill(hit_z[ihit], hit_rho);
+      const float hit_rho = sqrt( hit_x->at(ihit)*hit_x->at(ihit) + hit_y->at(ihit)*hit_y->at(ihit) );
 
-      h2_yx_loc[system-1][layer].Fill(hit_xloc[ihit], hit_yloc[ihit]);
+      h2_yx.Fill(hit_x->at(ihit), hit_y->at(ihit));
+      h2_rz.Fill(hit_z->at(ihit), hit_rho);
 
-      //cout << "    " << ihit << " " <<  system << " " << side << " " << layer << " "
-      //	   << hit_x[ihit] << " " <<  hit_y[ihit] << " " <<  hit_z[ihit] << " " <<  (*hit_t)[ihit] << endl;
-      
+      h2_yx_loc[system-1][layer].Fill(hit_xloc->at(ihit), hit_yloc->at(ihit));
+
     } // ihit
 
     
