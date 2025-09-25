@@ -22,87 +22,88 @@
  * @date  21 March 2025
  * @version $Id: $
  */
-class HTATrainingTree : public marlin::Processor
-{
-public:
-  virtual Processor*  newProcessor() { return new HTATrainingTree ; }
+class HTATrainingTree : public marlin::Processor {
+  public:
+    virtual Processor* newProcessor() { return new HTATrainingTree; }
 
-  HTATrainingTree(const HTATrainingTree &) = delete ;
-  HTATrainingTree& operator =(const HTATrainingTree &) = delete ;
-  HTATrainingTree() ;
+    HTATrainingTree(const HTATrainingTree&)            = delete;
+    HTATrainingTree& operator=(const HTATrainingTree&) = delete;
+    HTATrainingTree();
 
-  /** Called at the begin of the job before anything is read.
+    /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.
    */
-  virtual void init() ;
+    virtual void init();
 
-  /** Called for every run.
+    /** Called for every run.
    */
-  virtual void processRunHeader( LCRunHeader* run ) ;
+    virtual void processRunHeader(LCRunHeader* run);
 
-  /** Called for every event - the working horse.
+    /** Called for every event - the working horse.
    */
-  virtual void processEvent( LCEvent * evt ) ; 
+    virtual void processEvent(LCEvent* evt);
 
-  virtual void check( LCEvent * evt ) ; 
+    virtual void check(LCEvent* evt);
 
-  /** Called after data processing for clean up.
+    /** Called after data processing for clean up.
    */
-  virtual void end() ;  
+    virtual void end();
 
-private:
+  private:
+    const dd4hep::rec::SurfaceMap* _surfMap{nullptr};
 
-  const dd4hep::rec::SurfaceMap* _surfMap {nullptr};
+    TTree* _HTAtree{nullptr};
 
-  TTree* _HTAtree {nullptr};
-  
-  int _nRun {0};
-  int _nEvt {0};
+    int _nRun{0};
+    int _nEvt{0};
 
-  int   _part_pdg {0};
-  float _part_px {0.};
-  float _part_py {0.};
-  float _part_pz {0.};
-  float _part_e {0.};
-  float _part_vx {0.};
-  float _part_vy {0.};
-  float _part_vz {0.};
-  float _part_t0 {0.};
-  float _part_q {0.};
+    int   _part_pdg{0};
+    float _part_px{0.};
+    float _part_py{0.};
+    float _part_pz{0.};
+    float _part_e{0.};
+    float _part_vx{0.};
+    float _part_vy{0.};
+    float _part_vz{0.};
+    float _part_t0{0.};
+    float _part_q{0.};
 
-  int _n_hit {0};
-  std::vector<unsigned int>* _hit_index;
-  std::vector<int>* _hit_mcp;
-  std::vector<unsigned int>* _hit_id0;
-  std::vector<float>* _hit_x;
-  std::vector<float>* _hit_y;
-  std::vector<float>* _hit_z;
-  std::vector<float>* _hit_t;
-  std::vector<float>* _hit_xloc;
-  std::vector<float>* _hit_yloc;
-  std::vector<float>* _hit_dxloc;
-  std::vector<float>* _hit_dyloc;
-  std::vector<float>* _hit_uphi;
-  std::vector<float>* _hit_utheta;
-  std::vector<float>* _hit_vphi;
-  std::vector<float>* _hit_vtheta;
+    int                        _n_hit{0};
+    std::vector<unsigned int>* _hit_index;
+    std::vector<int>*          _hit_mcp;
+    std::vector<unsigned int>* _hit_id0;
+    std::vector<float>*        _hit_x;
+    std::vector<float>*        _hit_y;
+    std::vector<float>*        _hit_z;
+    std::vector<float>*        _hit_t;
+    std::vector<float>*        _hit_u;
+    std::vector<float>*        _hit_v;
+    std::vector<float>*        _hit_du;
+    std::vector<float>*        _hit_dv;
+    std::vector<float>*        _hit_ux;
+    std::vector<float>*        _hit_uy;
+    std::vector<float>*        _hit_uz;
+    std::vector<float>*        _hit_vx;
+    std::vector<float>*        _hit_vy;
+    std::vector<float>*        _hit_vz;
 
+    //! Input MC particle collection
+    std::string _inputMCParticleCollection{};
 
-  //! Input MC particle collection
-  std::string _inputMCParticleCollection {};
-  
-  //! Input tracker hit collections
-  std::vector<std::string> _inputTrackerHitCollections {};
+    //! Input tracker hit collections
+    std::vector<std::string> _inputTrackerHitCollections{};
 
-  //! Input tracker simhit collections
-  std::vector<std::string> _inputTrackerSimHitCollections {};
+    //! Input tracker simhit collections
+    std::vector<std::string> _inputTrackerSimHitCollections{};
 
-  //! Input tracker hit relation collections
-  std::vector<std::string> _inputTrackerHitRelCollections {};
+    //! Input tracker hit relation collections
+    std::vector<std::string> _inputTrackerHitRelCollections{};
 
-  //! Particle types
-  std::vector<int> _particleTypes {};
+    //! Particle types
+    std::vector<int> _particleTypes{};
 
-  bool _saveOnlyPartHits = true;
+    //! Azimuthal angle range for the tracker hits
+    std::vector<float> _trackerHitPhiRange{};
 
+    bool _saveOnlyPartHits = true;
 };
